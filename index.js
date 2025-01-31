@@ -1,44 +1,51 @@
-const express =require("express")
-const mongoose= require("mongoose")
-const cors= require("cors")
-const VolunteerModel =require('./models/volunteer')
+require("dotenv").config(); // Load environment variables
 
-const app=express()
-app.use(express.json())
-app.use(cors())
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const VolunteerModel = require("./models/volunteer");
 
-mongoose.connect("mongodb://127.0.0.1:27017/VolunteerHub");
+const app = express();
+app.use(express.json());
+app.use(cors());
 
-app.post("/login",(req,res)=>{
-    const {email, password}=req.body;
-    VolunteerModel.findOne({email:email})
-    .then(user=>{
-        if(user)
-        {
-            if(user.password==password)
-            {
-                res.json("Success")
+const PORT = process.env.PORT || 3001;
+const MONGO_URI = process.env.MONGO_URI;
+
+// Connect to MongoDB Atlas using the .env variable
+mongoose.connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log("MongoDB Atlas Connected Successfully"))
+.catch(err => console.error("MongoDB Connection Error:", err));
+
+// Login Route
+app.post("/login", (req, res) => {
+    const { email, password } = req.body;
+    VolunteerModel.findOne({ email })
+    .then(user => {
+        if (user) {
+            if (user.password === password) {
+                res.json("Success");
+            } else {
+                res.json("The password is incorrect");
             }
-            else
-            {
-                res.json("The password is incorrect")
-            }
-        }
-        else
-        {
-            res.json("No record exists")
+        } else {
+            res.json("No record exists");
         }
     })
-})
+    .catch(err => res.json(err));
+});
 
-app.post('/register',(req,res)=>{
+// Register Route
+app.post("/register", (req, res) => {
     VolunteerModel.create(req.body)
-    .then(volunteers=> res.json(volunteers))
-    .catch(err=> res.json(err))
+    .then(volunteers => res.json(volunteers))
+    .catch(err => res.json(err));
+});
 
-
-})
-
-app.listen(3001, ()=>{
-    console.log("server is running")
-})
+// Start Server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
